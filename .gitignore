@@ -13,3 +13,15 @@ data/
 
 # PyCharm 설정
 .idea/*
+
+# --- Pre-commit & Linting ---
+.pre-commit-config.yaml.tmp # pre-commit 임시 파일
+.ruff_cache/ # Ruff 캐시
+
+# --- Python & uv ---
+__pycache__/ # 파이썬 컴파일 캐시
+*.py[cod]
+.uv/ # uv 관련 설정/캐시
+
+# --- Jupyter Notebook ---
+.ipynb_checkpoints/ # 주피터 노트북 자동 저장 체크포인트
