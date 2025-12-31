@@ -1,7 +1,7 @@
 {
   "id": "yongkyun/01_spaceship_titanic",
   "title": "01_spaceship_titanic",
-  "code_file": "baseline_script.py",
+  "code_file": "main.py",
   "language": "python",
   "kernel_type": "script",
   "is_private": "true",

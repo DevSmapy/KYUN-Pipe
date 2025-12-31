@@ -3,6 +3,7 @@ from typing import Optional, Tuple
 import logging
 from pathlib import Path
 
+# 모듈별 로거 생성
 logger = logging.getLogger(__name__)
 
 
@@ -44,7 +45,7 @@ class DataLoader:
 
     def _read_file(self, path: Path, **kwargs) -> pd.DataFrame:
         """Helper to read files based on extension."""
-        logger.debug(f"Reading file: {path.name}")
+        logger.debug(f"Reading file: {path.name}")  # 상세 분석 시에만 보이게 설정 가능
         if path.suffix == ".csv":
             return pd.read_csv(path, **kwargs)
         elif path.suffix in [".parquet", ".pqt"]:
@@ -64,12 +65,3 @@ class DataLoader:
                 self.test_df.copy() if self.test_df is not None else None
             )
         return self.train_df, self.test_df
-
-
-if __name__ == "__main__":
-    dataloader = DataLoader(
-        "/kaggle/input/spaceship-titanic/train.csv",
-        "/kaggle/input/spaceship-titanic/test.csv",
-    )
-    dataloader.load_data()
-    train, test = dataloader.get_data(copy=False)
