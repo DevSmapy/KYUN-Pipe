@@ -71,6 +71,3 @@ class ModelTrainer:
 
     def get_model(self) -> Any:
         return self.model
-
-
-# ... 기존 get_model 등 유지 ...
