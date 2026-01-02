@@ -2,7 +2,7 @@ name: Lint and Format Check
 
 on:
   push:
-    braches: [ main ]
+    branches: [ main ]  # 'braches' -> 'branches'
   pull_request:
     branches: [ main ]
 
