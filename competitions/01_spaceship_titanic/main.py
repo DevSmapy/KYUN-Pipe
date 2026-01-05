@@ -16,6 +16,7 @@ from Trainer import ModelTrainer  # noqa: E402
 from DataLoader import DataLoader  # noqa: E402
 from Preprocessor import UniversalPreprocessor  # noqa: E402
 from Evaluator import ModelEvaluator  # noqa: E402
+from Reporter import ResultReporter  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -111,15 +112,18 @@ class ValueEncoder(BaseEstimator, TransformerMixin):
 
 
 if __name__ == "__main__":
+    # 1. Load data
+    logger.info("Step 1: Loading Datasets...")
     dataloader = DataLoader(
         "/kaggle/input/spaceship-titanic/train.csv",
         "/kaggle/input/spaceship-titanic/test.csv",
     )
     dataloader.load_data()
     train, test = dataloader.get_data(copy=False)
-
     y = train["Transported"]
 
+    # 2. Set up preprocessing pipeline
+    logger.info("Step 2: Setting up preprocessing pipeline...")
     steps = [
         ("cabin_splitter", CabinSplitter()),
         (
@@ -132,19 +136,38 @@ if __name__ == "__main__":
 
     preprocessor = UniversalPreprocessor(steps)
 
+    # 3. Preprocess data
+    logger.info("Step 3: Preprocessing data...")
     train_X, test_X = preprocessor.run(train, test)
 
+    # 4. Split data
+    logger.info("Step 4: Training the model...")
     train_X, valid_X, train_y, valid_y = train_test_split(
         train_X, y, test_size=0.3, random_state=42
     )
-
+    # 5. Train model
+    logger.info("Step 5: Training the Random Forest model...")
     trainer = ModelTrainer(RandomForestClassifier(), "Spaceship_RF")
 
     trainer.train(train_X, train_y)
 
+    # 6. Evaluate model
+    logger.info("Step 6: Evaluating the model...")
     evaluator = ModelEvaluator(task_type="classification")
-
     val_preds = trainer.predict(valid_X)
     metrics = evaluator.evaluate(valid_y, val_preds)
-
     evaluator.analyze_feature_importance(trainer.get_model(), train_X.columns.tolist())
+
+    # 7. Predction Test data
+    logger.info("Step 7: Evaluating the Random Forest model...")
+    test_ids = test["PassengerId"]
+    test_preds = trainer.predict(test_X)
+    pred = pd.concat([test_ids, test_preds], axis=1)
+    pred.columns = ["PassengerId", "Transported"]
+
+    # 8. Save results
+    reporter = ResultReporter("/kaggle/working")
+    reporter.save_metadata({"task": "spaceship_titanic", "model": "random_forest"})
+    reporter.save_metrics(metrics)
+    reporter.save_model(trainer.get_model(), "spaceship_rf_model")
+    reporter.save_predictions(pred, "predictions")
