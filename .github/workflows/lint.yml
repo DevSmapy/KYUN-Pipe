@@ -17,6 +17,7 @@ jobs:
         uses: astral-sh/setup-uv@v3
         with:
           version: "latest"
+          enable-cache: true
 
       # 파이썬 환경 설정
       - name: Set up Python
@@ -24,7 +25,11 @@ jobs:
         with:
           python-version-file: "pyproject.toml"
 
-      # 로컬과 동일한 규칙으로 서버에서 검사 (수정 없이, 체크만)
+      # 의존성 설치 (ruff가 노트북을 검사할 때 필요할 수 있음)
+      - name: Install dependencies
+        run: uv sync
+
+      # 로컬과 동일한 규칙으로 서버에서 검사
       - name: Run Ruff Check
         run: uv run ruff check .
 
