@@ -19,6 +19,7 @@ dev = [
 [tool.ruff]
 # 검사 대상에 노트북 포함
 extend-include = ["*.ipynb"]
+line-length = 88
 
 [tool.ruff.lint]
 # 코드 품질을 위한 권장 규칙셋 (에러, Pyflakes, Isort, 명명규칙)
