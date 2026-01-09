@@ -23,3 +23,8 @@ extend-include = ["*.ipynb"]
 [tool.ruff.lint]
 # 코드 품질을 위한 권장 규칙셋 (에러, Pyflakes, Isort, 명명규칙)
 select = ["E", "F", "I", "N", "UP"]
+ignore = [
+    "N803",
+    "N806",
+    "N816",
+]
