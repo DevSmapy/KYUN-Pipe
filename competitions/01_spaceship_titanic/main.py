@@ -1,22 +1,22 @@
+import logging
 import sys
 
 import pandas as pd
-import logging
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.impute import SimpleImputer, KNNImputer
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import KNNImputer, SimpleImputer
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
 
 module_path = "/kaggle/input/pipe-core"
 if module_path not in sys.path:
     sys.path.append(module_path)
 
-from Trainer import ModelTrainer  # noqa: E402
 from DataLoader import DataLoader  # noqa: E402
-from Preprocessor import UniversalPreprocessor  # noqa: E402
 from Evaluator import ModelEvaluator  # noqa: E402
+from Preprocessor import UniversalPreprocessor  # noqa: E402
 from Reporter import ResultReporter  # noqa: E402
+from Trainer import ModelTrainer  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -155,15 +155,20 @@ if __name__ == "__main__":
     logger.info("Step 6: Evaluating the model...")
     evaluator = ModelEvaluator(task_type="classification")
     val_preds = trainer.predict(valid_X)
-    metrics = evaluator.evaluate(valid_y, val_preds)
+    metrics = evaluator.evaluate(valid_y, val_preds.to_numpy())
     evaluator.analyze_feature_importance(trainer.get_model(), train_X.columns.tolist())
 
     # 7. Predction Test data
     logger.info("Step 7: Evaluating the Random Forest model...")
+    assert test is not None
     test_ids = test["PassengerId"]
-    test_preds = trainer.predict(test_X)
+
+    if test_X is not None:
+        test_preds = trainer.predict(test_X)
+    else:
+        raise ValueError("Test data not found. Please check your data loader.")
     pred = pd.concat([test_ids, test_preds], axis=1)
-    pred.columns = ["PassengerId", "Transported"]
+    pred.columns = pd.Index(["PassengerId", "Transported"])
 
     # 8. Save results
     reporter = ResultReporter("/kaggle/working")

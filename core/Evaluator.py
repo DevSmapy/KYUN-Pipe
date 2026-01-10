@@ -1,14 +1,15 @@
 import logging
-from typing import Dict, Any, List
-import pandas as pd
+from typing import Any
+
 import numpy as np
+import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
+    classification_report,
+    confusion_matrix,
     f1_score,
     precision_score,
     recall_score,
-    confusion_matrix,
-    classification_report,
 )
 
 logger = logging.getLogger(__name__)
@@ -26,9 +27,9 @@ class ModelEvaluator:
             task_type (str): Type of ML task ('classification' or 'regression').
         """
         self.task_type = task_type
-        self.results: Dict[str, Any] = {}
+        self.results: dict[str, Any] = {}
 
-    def evaluate(self, y_true: pd.Series, y_pred: np.ndarray) -> Dict[str, float]:
+    def evaluate(self, y_true: pd.Series, y_pred: np.ndarray) -> dict[str, float]:
         """
         General evaluation method based on the task type.
         """
@@ -40,7 +41,7 @@ class ModelEvaluator:
 
     def _evaluate_classification(
         self, y_true: pd.Series, y_pred: np.ndarray
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Calculates detailed classification metrics.
         """
@@ -68,7 +69,7 @@ class ModelEvaluator:
         return confusion_matrix(y_true, y_pred)
 
     def analyze_feature_importance(
-        self, model: Any, feature_names: List[str], top_n: int = 10
+        self, model: Any, feature_names: list[str], top_n: int = 10
     ):
         """
         Extracts and logs feature importance from the trained model.

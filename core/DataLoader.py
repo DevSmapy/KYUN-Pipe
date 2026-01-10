@@ -1,7 +1,7 @@
-import pandas as pd
-from typing import Optional, Tuple
 import logging
 from pathlib import Path
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -12,11 +12,11 @@ class DataLoader:
     Handles standard CSV loading and basic path validation.
     """
 
-    def __init__(self, train_path: str, test_path: Optional[str] = None):
+    def __init__(self, train_path: str, test_path: str | None = None):
         self.train_path = Path(train_path)
         self.test_path = Path(test_path) if test_path else None
-        self.train_df: Optional[pd.DataFrame] = None
-        self.test_df: Optional[pd.DataFrame] = None
+        self.train_df: pd.DataFrame | None = None
+        self.test_df: pd.DataFrame | None = None
 
     def load_data(self, **kwargs) -> None:
         """
@@ -52,9 +52,7 @@ class DataLoader:
         else:
             raise ValueError(f"Unsupported format: {path.suffix}")
 
-    def get_data(
-        self, copy: bool = True
-    ) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
+    def get_data(self, copy: bool = True) -> tuple[pd.DataFrame, pd.DataFrame | None]:
         if self.train_df is None:
             logger.error("Attempted to get data before loading.")
             raise RuntimeError("Data not loaded. Call load_data() first.")
