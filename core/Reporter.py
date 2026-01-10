@@ -1,9 +1,10 @@
 import json
-import os
-import joblib
 import logging
+import os
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
+
+import joblib
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -23,18 +24,18 @@ class ResultReporter:
             os.makedirs(self.output_dir)
             logger.info(f"Created output directory: {self.output_dir}")
 
-    def _save_json(self, data: Dict[str, Any], filename: str):
+    def _save_json(self, data: dict[str, Any], filename: str):
         """Internal helper to save dictionary as JSON."""
         path = os.path.join(self.output_dir, filename)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4)
         logger.info(f"Saved: {path}")
 
-    def save_metadata(self, metadata: Dict[str, Any]):
+    def save_metadata(self, metadata: dict[str, Any]):
         """Saves experiment metadata."""
         self._save_json(metadata, "metadata.json")
 
-    def save_metrics(self, metrics: Dict[str, Any]):
+    def save_metrics(self, metrics: dict[str, Any]):
         """Saves evaluation metrics."""
         self._save_json(metrics, "metrics.json")
 
