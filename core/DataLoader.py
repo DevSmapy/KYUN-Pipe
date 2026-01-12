@@ -1,5 +1,3 @@
-import pandas as pd
-from typing import Optional, Tuple, Dict, List
 import logging
 from pathlib import Path
 
@@ -17,9 +15,9 @@ class DataLoader:
     def __init__(self, train_path: str, test_path: str | None = None):
         self.train_path = Path(train_path)
         self.test_path = Path(test_path) if test_path else None
-        self.train_df: Optional[pd.DataFrame] = None
-        self.test_df: Optional[pd.DataFrame] = None
-        self.additional_data: Dict[str, pd.DataFrame] = {}
+        self.train_df: pd.DataFrame | None = None
+        self.test_df: pd.DataFrame | None = None
+        self.additional_data: dict[str, pd.DataFrame] = {}
 
     def load_data(self, **kwargs) -> None:
         """Loads core training and test data."""
@@ -35,7 +33,7 @@ class DataLoader:
             )
 
     def load_additional_data(
-        self, directory_path: str, exclude: List[str] = None
+        self, directory_path: str, exclude: list[str] | None = None
     ) -> None:
         """
         Scans a directory and loads all CSV files except core files into a dictionary.
@@ -52,18 +50,18 @@ class DataLoader:
                     f"Loaded additional table: {name} ({self.additional_data[name].shape})"
                 )
 
-    def get_data(
-        self, copy: bool = True
-    ) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
+    def get_data(self, copy: bool = True) -> tuple[pd.DataFrame, pd.DataFrame | None]:
         if self.train_df is None:
             raise RuntimeError("Call load_data() before getting data.")
-        return (
-            (self.train_df.copy(), self.test_df.copy())
-            if copy
-            else (self.train_df, self.test_df)
-        )
 
-    def get_additional_data(self) -> Dict[str, pd.DataFrame]:
+        if copy:
+            # Safely handle the case where self.test_df could be None
+            test_out = self.test_df.copy() if self.test_df is not None else None
+            return self.train_df.copy(), test_out
+
+        return self.train_df, self.test_df
+
+    def get_additional_data(self) -> dict[str, pd.DataFrame]:
         """Returns the dictionary of loaded context tables."""
         return self.additional_data
 
