@@ -1,27 +1,28 @@
 repos:
-  # 1. 기본 유틸리티: 파일 끝의 공백, 대용량 파일 검사 등
+  # 1. 기본 유틸리티
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0  # 버전 업데이트
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
-        args: ['--maxkb=10000'] # 10MB 이상 파일 차단
+        args: ['--maxkb=10000']
 
-  # 2. Ruff: 파이썬 코드 통합 검사 및 자동 수정
+  # 2. Ruff: Lint & Format (버전 최신화)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.14
+    rev: v0.8.6
     hooks:
       - id: ruff
-        args: [ --fix ] # Lint 에러 자동 수정
-      - id: ruff-format # 코드 스타일 자동 수정
+        args: [ --fix ]
+      - id: ruff-format
 
-  # 3. nbstripout: Jupyter Notebook 결과물 삭제
-  - repo: https://github.com/kynan/nbstripout
-    rev: 0.6.1
+  # 3. Mypy: 정적 타입 검사 추가
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.1
     hooks:
-      - id: nbstripout
+      - id: mypy
+        additional_dependencies: [types-requests, types-PyYAML, pandas-stubs] # 필요한 타입 힌트 라이브러리
 
   # 4. Prettier: 마크다운 및 JSON 포맷팅
   - repo: https://github.com/pre-commit/mirrors-prettier

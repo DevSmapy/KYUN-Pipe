@@ -3,6 +3,8 @@ from typing import Optional, Tuple, Dict, List
 import logging
 from pathlib import Path
 
+import pandas as pd
+
 logger = logging.getLogger(__name__)
 
 
@@ -12,7 +14,7 @@ class DataLoader:
     Handles standard CSV loading and additional context tables.
     """
 
-    def __init__(self, train_path: str, test_path: Optional[str] = None):
+    def __init__(self, train_path: str, test_path: str | None = None):
         self.train_path = Path(train_path)
         self.test_path = Path(test_path) if test_path else None
         self.train_df: Optional[pd.DataFrame] = None

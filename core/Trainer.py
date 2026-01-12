@@ -1,5 +1,6 @@
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
+
 import pandas as pd
 from sklearn.model_selection import GridSearchCV
 
@@ -14,14 +15,14 @@ class ModelTrainer:
     def __init__(self, model: Any, model_name: str = "BaseModel"):
         self.model = model
         self.model_name = model_name
-        self.best_params: Optional[Dict[str, Any]] = None
+        self.best_params: dict[str, Any] | None = None
         self.is_tuned = False
 
     def train(
         self,
         X_train: pd.DataFrame,
         y_train: pd.Series,
-        param_grid: Optional[Dict[str, Any]] = None,
+        param_grid: dict[str, Any] | None = None,
     ) -> None:
         """
         Trains the model. If param_grid is provided, it performs GridSearchCV.
@@ -46,7 +47,7 @@ class ModelTrainer:
             self.model.fit(X_train, y_train)
             logger.info(f"[{self.model_name}] Training completed.")
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """
         Provides model information, including whether it was tuned and its current parameters.
         """

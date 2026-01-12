@@ -1,9 +1,9 @@
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import KNNImputer, SimpleImputer
+from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.metrics import f1_score, accuracy_score
-from sklearn.ensemble import RandomForestClassifier
 
 # 1. Load data
 # Using Kaggle input path for the competition datasets
@@ -40,10 +40,10 @@ X = pd.concat([num_filled, cat_filled, cabin, y], axis=1).dropna()
 y = X["Transported"]
 
 # split string (cabin)
-cabin = X["Cabin"].str.split("/").str
-X["deck"] = cabin[0]
-X["num"] = cabin[1].astype(int)
-X["side"] = cabin[2]
+cabin = X["Cabin"].str.split("/")
+X["deck"] = cabin.str[0]
+X["num"] = cabin.str[1].astype(int)
+X["side"] = cabin.str[2]
 
 # transform category columns by One-Hot-Encoding
 onehotencoder = OneHotEncoder(sparse_output=False, handle_unknown="ignore").set_output(

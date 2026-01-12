@@ -1,5 +1,6 @@
 import logging
-from typing import List, Optional, Tuple, Any
+from typing import Any
+
 import pandas as pd
 from sklearn.pipeline import Pipeline
 
@@ -13,7 +14,7 @@ class UniversalPreprocessor:
     separating fitting (train) and transformation (test).
     """
 
-    def __init__(self, steps: List[Tuple[str, Any]]):
+    def __init__(self, steps: list[tuple[str, Any]]):
         """
         Args:
             steps (List[Tuple[str, Any]]): List of (name, transformer) tuples
@@ -23,8 +24,8 @@ class UniversalPreprocessor:
         self.pipeline = Pipeline(steps)
 
     def run(
-        self, train_df: pd.DataFrame, test_df: Optional[pd.DataFrame] = None
-    ) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
+        self, train_df: pd.DataFrame, test_df: pd.DataFrame | None = None
+    ) -> tuple[pd.DataFrame, pd.DataFrame | None]:
         """
         Executes the preprocessing pipeline.
 
