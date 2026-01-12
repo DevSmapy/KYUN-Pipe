@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class DataLoader:
     """
     A universal data loader for Kaggle competitions.
-    Handles standard CSV loading and basic path validation.
+    Handles standard CSV loading and additional context tables.
     """
 
     def __init__(self, train_path: str, test_path: str | None = None):
@@ -17,48 +17,58 @@ class DataLoader:
         self.test_path = Path(test_path) if test_path else None
         self.train_df: pd.DataFrame | None = None
         self.test_df: pd.DataFrame | None = None
+        self.additional_data: dict[str, pd.DataFrame] = {}
 
     def load_data(self, **kwargs) -> None:
-        """
-        Loads training and test data from CSV files.
-        """
+        """Loads core training and test data."""
         if not self.train_path.exists():
-            logger.error(f"Train file missing: {self.train_path}")
             raise FileNotFoundError(f"Train file not found at: {self.train_path}")
 
         self.train_df = self._read_file(self.train_path, **kwargs)
 
-        if self.test_path:
-            if self.test_path.exists():
-                self.test_df = self._read_file(self.test_path, **kwargs)
+        if self.test_path and self.test_path.exists():
+            self.test_df = self._read_file(self.test_path, **kwargs)
+            logger.info(
+                f"Loaded Core: Train {self.train_df.shape}, Test {self.test_df.shape}"
+            )
+
+    def load_additional_data(
+        self, directory_path: str, exclude: list[str] | None = None
+    ) -> None:
+        """
+        Scans a directory and loads all CSV files except core files into a dictionary.
+        """
+        dir_path = Path(directory_path)
+        exclude = exclude or ["train", "test", "sample_submission"]
+
+        logger.info(f"Scanning directory: {directory_path} for additional tables...")
+        for file in dir_path.glob("*.csv"):
+            name = file.stem
+            if name not in exclude:
+                self.additional_data[name] = self._read_file(file)
                 logger.info(
-                    f"Successfully loaded Train {self.train_df.shape} and Test {self.test_df.shape}"
+                    f"Loaded additional table: {name} ({self.additional_data[name].shape})"
                 )
-            else:
-                logger.warning(
-                    f"Test path provided but file not found: {self.test_path}"
-                )
-                logger.info(f"Only Train data loaded: {self.train_df.shape}")
-        else:
-            logger.info(f"Train data loaded: {self.train_df.shape}")
+
+    def get_data(self, copy: bool = True) -> tuple[pd.DataFrame, pd.DataFrame | None]:
+        if self.train_df is None:
+            raise RuntimeError("Call load_data() before getting data.")
+
+        if copy:
+            # Safely handle the case where self.test_df could be None
+            test_out = self.test_df.copy() if self.test_df is not None else None
+            return self.train_df.copy(), test_out
+
+        return self.train_df, self.test_df
+
+    def get_additional_data(self) -> dict[str, pd.DataFrame]:
+        """Returns the dictionary of loaded context tables."""
+        return self.additional_data
 
     def _read_file(self, path: Path, **kwargs) -> pd.DataFrame:
-        """Helper to read files based on extension."""
-        logger.debug(f"Reading file: {path.name}")
         if path.suffix == ".csv":
             return pd.read_csv(path, **kwargs)
         elif path.suffix in [".parquet", ".pqt"]:
             return pd.read_parquet(path, **kwargs)
         else:
             raise ValueError(f"Unsupported format: {path.suffix}")
-
-    def get_data(self, copy: bool = True) -> tuple[pd.DataFrame, pd.DataFrame | None]:
-        if self.train_df is None:
-            logger.error("Attempted to get data before loading.")
-            raise RuntimeError("Data not loaded. Call load_data() first.")
-
-        if copy:
-            return self.train_df.copy(), (
-                self.test_df.copy() if self.test_df is not None else None
-            )
-        return self.train_df, self.test_df

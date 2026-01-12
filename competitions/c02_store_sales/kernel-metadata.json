@@ -1,0 +1,15 @@
+{
+  "id": "yongkyun/02_storesales_timesereisforecasting",
+  "title": "02_storesales_timesereisforecasting",
+  "code_file": "main.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": "true",
+  "enable_gpu": "false",
+  "enable_tpu": "false",
+  "enable_internet": "true",
+  "dataset_sources": ["yongkyun/pipe-core"],
+  "competition_sources": ["store-sales-time-series-forecasting"],
+  "kernel_sources": [],
+  "model_sources": []
+}
