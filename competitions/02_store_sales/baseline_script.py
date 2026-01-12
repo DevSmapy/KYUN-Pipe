@@ -1,11 +1,12 @@
 import os
+from functools import reduce
+
+import lightgbm as lgb
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
-import lightgbm as lgb  # LightGBM framework for utilities
 from lightgbm import LGBMRegressor  # Scikit-learn API for LightGBM
-from functools import reduce  # For sequential merging of DataFrames
+from matplotlib import pyplot as plt
 from sklearn.metrics import mean_squared_error
 
 if __name__ == "__main__":
@@ -77,7 +78,9 @@ if __name__ == "__main__":
         .agg(["mean", "std"])
         .reset_index()
     )
-    store_stats.columns = ["store_nbr", "avg_transactions", "std_transactions"]
+    store_stats.columns = pd.Index(
+        ["store_nbr", "avg_transactions", "std_transactions"]
+    )
 
     # Merge store metadata (location, type) with statistical features
     store_profile = pd.merge(stores, store_stats, on="store_nbr", how="left")
