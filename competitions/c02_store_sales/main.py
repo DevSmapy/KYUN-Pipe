@@ -2,7 +2,6 @@ import logging
 import sys
 
 import lightgbm as lgb
-import numpy as np
 import pandas as pd
 from lightgbm import LGBMRegressor
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -12,8 +11,8 @@ if module_path not in sys.path:
     sys.path.append(module_path)
 
 from DataLoader import DataLoader  # noqa: E402
-from Preprocessor import UniversalPreprocessor  # noqa: E402
-from Trainer import ModelTrainer  # noqa: E402
+from Preprocessor import DataSplitter, UniversalPreprocessor  # noqa: E402
+from Trainer import TimeSeriesTrainer  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -206,11 +205,9 @@ if __name__ == "__main__":
     dataloader.load_additional_data(directory_path=DATA_DIR)
 
     train, test = dataloader.get_data()
-    context_data = (
-        dataloader.get_additional_data()
-    )  # Returns dict: {'oil': df, 'stores': df, ...}
-    print(context_data.keys())
+    context_data = dataloader.get_additional_data()
 
+    # 2. Setup Preprocessing Steps
     steps = [
         ("holiday_checker", HolidayChecker(context_data["holidays_events"])),
         ("oil_price_imputer", OilPriceImputer(context_data["oil"])),
@@ -226,24 +223,14 @@ if __name__ == "__main__":
         ),
     ]
 
+    # 3. Run Universal Preprocessor
     preprocessor = UniversalPreprocessor(steps)
     train_X, test_X = preprocessor.run(train, test)
 
-    print(train_X.head())
-    print(train_X.info())
+    # 4. Split Data for Time Series Validation
+    train_set, valid_set = DataSplitter.split_by_date(train_X, split_date="2017-08-01")
 
-    print(test_X.head())
-    print(test_X.info())
-
-    # 8. Modeling Preparation (Baseline 방식 유지)
-    split_date = "2017-08-01"
-
-    # train_X는 UniversalPreprocessor를 통과한 데이터
-    # 타겟값 분리 및 로그 변환 (RMSLE 최적화)
-    train_data = train_X[train_X["date"] < split_date]
-    valid_data = train_X[train_X["date"] >= split_date]
-
-    # 학습에 쓸 피처 선택 (date 컬럼 등 제외)
+    # 5. Feature Selection
     features = [
         "store_nbr",
         "family",
@@ -251,28 +238,31 @@ if __name__ == "__main__":
         "dcoilwtico",
         "is_holiday",
         "is_workday",
+        "year",
+        "month",
         "dayofweek",
-    ]  # 예시
+        "is_weekend",
+    ]
 
-    X_train = train_data[features]
-    y_train = np.log1p(train_data["sales"])
-    X_valid = valid_data[features]
-    y_valid = np.log1p(valid_data["sales"])
+    # 6. Initialize TimeSeriesTrainer
 
-    # 9. Trainer 사용 (Hold-out 전략)
-    trainer = ModelTrainer(
-        LGBMRegressor(n_estimators=1000, learning_rate=0.05, random_state=42),
-        "StoreSales_LGBM",
+    ts_trainer = TimeSeriesTrainer(
+        model=LGBMRegressor(n_estimators=1000, learning_rate=0.05, random_state=42),
+        model_name="StoreSales_LGBM",
+        target_col="sales",
     )
 
-    # LGBM 전용 콜백 설정
-    callbacks = [lgb.early_stopping(stopping_rounds=50), lgb.log_evaluation(period=100)]
+    # 7. Specialized Training (Handles log1p internally)
+    fit_params = {
+        "eval_metric": "rmse",
+        "callbacks": [lgb.early_stopping(50), lgb.log_evaluation(100)],
+    }
 
-    trainer.train(
-        X_train,
-        y_train,
-        X_valid=X_valid,
-        y_valid=y_valid,
-        eval_metric="rmse",  # LGBM fit에 전달될 인자
-        callbacks=callbacks,  # LGBM fit에 전달될 인자
+    ts_trainer.train_with_log(
+        train_df=train_set, valid_df=valid_set, features=features, **fit_params
     )
+
+    # 8. Final Prediction on Test Data (Handles expm1 internally)
+    if test_X is not None:
+        final_preds = ts_trainer.predict_original_scale(test_X)
+        logger.info(f"Final predictions generated. Shape: {final_preds.shape}")
