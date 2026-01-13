@@ -1,7 +1,9 @@
 import logging
 from typing import Any
 
+import numpy as np
 import pandas as pd
+from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import GridSearchCV
 
 logger = logging.getLogger(__name__)
@@ -82,3 +84,40 @@ class ModelTrainer:
 
     def get_model(self) -> Any:
         return self.model
+
+
+class TimeSeriesTrainer(ModelTrainer):
+    """
+    Specialized trainer for Time Series models.
+    """
+
+    def __init__(
+        self, model: Any, model_name: str = "TSModel", target_col: str = "sales"
+    ):
+        super().__init__(model, model_name)
+        self.target_col = target_col
+        self.features = None
+
+    def train_with_log(self, train_df, valid_df, features, **fit_params):
+        """
+        Automatically handles log1p transformation of the target.
+        """
+        self.features = features
+        X_train = train_df[features]
+        y_train = np.log1p(train_df[self.target_col])
+        X_valid = valid_df[features]
+        y_valid = np.log1p(valid_df[self.target_col])
+
+        super().train(X_train, y_train, X_valid=X_valid, y_valid=y_valid, **fit_params)
+
+        preds_log = self.model.predict(X_valid)
+        rmsle = np.sqrt(mean_squared_error(y_valid, preds_log))
+        logger.info(f"[{self.model_name}] Validation RMSLE: {rmsle:.4f}")
+        return rmsle
+
+    def predict_original_scale(self, df: pd.DataFrame) -> np.ndarray:
+        """
+        Returns predictions reversed from log scale (expm1).
+        """
+        preds_log = self.model.predict(df[self.features])
+        return np.expm1(preds_log)
