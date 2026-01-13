@@ -1,7 +1,9 @@
 import logging
 from typing import Any
 
+import numpy as np
 import pandas as pd
+from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import GridSearchCV
 
 logger = logging.getLogger(__name__)
@@ -22,30 +24,40 @@ class ModelTrainer:
         self,
         X_train: pd.DataFrame,
         y_train: pd.Series,
+        X_valid: pd.DataFrame | None = None,
+        y_valid: pd.Series | None = None,
         param_grid: dict[str, Any] | None = None,
+        scoring: str = "neg_root_mean_squared_error",
+        cv: Any = None,  # None이면 Hold-out, 숫자가 들어오면 K-Fold, TimeSeriesSplit 객체도 가능
+        **fit_params,  # LGBM의 early_stopping 등을 위한 추가 인자
     ) -> None:
         """
-        Trains the model. If param_grid is provided, it performs GridSearchCV.
+        Trains the model with support for Hold-out or CV.
         """
-        if param_grid:
+        if param_grid and cv is not None:
+            # 시계열 CV (TimeSeriesSplit 등) 또는 일반 CV 수행
             logger.info(
-                f"[{self.model_name}] Starting Hyperparameter Tuning (GridSearch)..."
+                f"[{self.model_name}] Starting Hyperparameter Tuning with CV..."
             )
             grid_search = GridSearchCV(
-                self.model, param_grid, cv=5, scoring="f1", n_jobs=-1
+                self.model, param_grid, cv=cv, scoring=scoring, n_jobs=-1
             )
-            grid_search.fit(X_train, y_train)
-
+            grid_search.fit(X_train, y_train, **fit_params)
             self.model = grid_search.best_estimator_
             self.best_params = grid_search.best_params_
             self.is_tuned = True
-
-            logger.info(f"[{self.model_name}] Best Tuning Completed! ✅")
-            logger.info(f"[{self.model_name}] Best Parameters: {self.best_params}")
         else:
-            logger.info(f"[{self.model_name}] Training with default/set parameters...")
-            self.model.fit(X_train, y_train)
-            logger.info(f"[{self.model_name}] Training completed.")
+            # Hold-out 방식 (baseline_script 방식)
+            logger.info(f"[{self.model_name}] Training with Hold-out validation...")
+            if X_valid is not None and y_valid is not None:
+                # LGBM의 early stopping 등을 활용하기 위해 eval_set 전달
+                self.model.fit(
+                    X_train, y_train, eval_set=[(X_valid, y_valid)], **fit_params
+                )
+            else:
+                self.model.fit(X_train, y_train, **fit_params)
+
+        logger.info(f"[{self.model_name}] Training completed.")
 
     def get_model_info(self) -> dict[str, Any]:
         """
@@ -72,3 +84,40 @@ class ModelTrainer:
 
     def get_model(self) -> Any:
         return self.model
+
+
+class TimeSeriesTrainer(ModelTrainer):
+    """
+    Specialized trainer for Time Series models.
+    """
+
+    def __init__(
+        self, model: Any, model_name: str = "TSModel", target_col: str = "sales"
+    ):
+        super().__init__(model, model_name)
+        self.target_col = target_col
+        self.features = None
+
+    def train_with_log(self, train_df, valid_df, features, **fit_params):
+        """
+        Automatically handles log1p transformation of the target.
+        """
+        self.features = features
+        X_train = train_df[features]
+        y_train = np.log1p(train_df[self.target_col])
+        X_valid = valid_df[features]
+        y_valid = np.log1p(valid_df[self.target_col])
+
+        super().train(X_train, y_train, X_valid=X_valid, y_valid=y_valid, **fit_params)
+
+        preds_log = self.model.predict(X_valid)
+        rmsle = np.sqrt(mean_squared_error(y_valid, preds_log))
+        logger.info(f"[{self.model_name}] Validation RMSLE: {rmsle:.4f}")
+        return rmsle
+
+    def predict_original_scale(self, df: pd.DataFrame) -> np.ndarray:
+        """
+        Returns predictions reversed from log scale (expm1).
+        """
+        preds_log = self.model.predict(df[self.features])
+        return np.expm1(preds_log)
