@@ -1,7 +1,10 @@
 import logging
 import sys
 
+import lightgbm as lgb
+import numpy as np
 import pandas as pd
+from lightgbm import LGBMRegressor
 from sklearn.base import BaseEstimator, TransformerMixin
 
 module_path = "/kaggle/input/pipe-core"
@@ -10,6 +13,7 @@ if module_path not in sys.path:
 
 from DataLoader import DataLoader  # noqa: E402
 from Preprocessor import UniversalPreprocessor  # noqa: E402
+from Trainer import ModelTrainer  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -172,6 +176,22 @@ class TimeSeriesWindowFeaturizer(BaseEstimator, TransformerMixin):
         return X.fillna(0)
 
 
+class DataTypeConverter(BaseEstimator, TransformerMixin):
+    def __init__(self, select_type, target_type):
+        self.select_type = select_type
+        self.target_type = target_type
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X = X.copy()
+        cols = X.select_dtypes(self.select_type).columns
+        for col in cols:
+            X[col] = X[col].astype(self.target_type)
+        return X
+
+
 # main.py execution block example
 if __name__ == "__main__":
     # 1. Initialize and Load All Data
@@ -200,6 +220,10 @@ if __name__ == "__main__":
         ),
         ("datetime_feature_extractor", DateTimeFeatureExtractor()),
         ("time_series_window_featurizer", TimeSeriesWindowFeaturizer()),
+        (
+            "data_type_converter",
+            DataTypeConverter(select_type="object", target_type="category"),
+        ),
     ]
 
     preprocessor = UniversalPreprocessor(steps)
@@ -210,3 +234,45 @@ if __name__ == "__main__":
 
     print(test_X.head())
     print(test_X.info())
+
+    # 8. Modeling Preparation (Baseline 방식 유지)
+    split_date = "2017-08-01"
+
+    # train_X는 UniversalPreprocessor를 통과한 데이터
+    # 타겟값 분리 및 로그 변환 (RMSLE 최적화)
+    train_data = train_X[train_X["date"] < split_date]
+    valid_data = train_X[train_X["date"] >= split_date]
+
+    # 학습에 쓸 피처 선택 (date 컬럼 등 제외)
+    features = [
+        "store_nbr",
+        "family",
+        "onpromotion",
+        "dcoilwtico",
+        "is_holiday",
+        "is_workday",
+        "dayofweek",
+    ]  # 예시
+
+    X_train = train_data[features]
+    y_train = np.log1p(train_data["sales"])
+    X_valid = valid_data[features]
+    y_valid = np.log1p(valid_data["sales"])
+
+    # 9. Trainer 사용 (Hold-out 전략)
+    trainer = ModelTrainer(
+        LGBMRegressor(n_estimators=1000, learning_rate=0.05, random_state=42),
+        "StoreSales_LGBM",
+    )
+
+    # LGBM 전용 콜백 설정
+    callbacks = [lgb.early_stopping(stopping_rounds=50), lgb.log_evaluation(period=100)]
+
+    trainer.train(
+        X_train,
+        y_train,
+        X_valid=X_valid,
+        y_valid=y_valid,
+        eval_metric="rmse",  # LGBM fit에 전달될 인자
+        callbacks=callbacks,  # LGBM fit에 전달될 인자
+    )
