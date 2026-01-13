@@ -6,33 +6,54 @@
 
 ---
 
-## 📅 Project Status: Phase 1 (EDA & Feature Exploration)
+## 📅 Project Status: Phase 2 (OOP Refactoring & Pipeline Construction)
 
-현재 **절차지향적 접근(Procedural Approach)**을 통해 데이터를 분석하고 가용한 피처들을 탐색하고 있는 초기 단계입니다.
+절차지향적인 `baseline_script.py`에서 벗어나, 재사용성과 확장성을 고려한 **OOP 아키텍처**로 리팩토링을 완료했습니다.
 
-- [x] 데이터 기초 통계 확인 (`train`, `test`, `stores`, `transactions`, `oil`, `holidays_events`)
-- [ ] 시계열 특성 파악 (Trend, Seasonality, Holidays)
-- [ ] 외부 요인(유가, 공휴일)과 판매량의 상관관계 분석
-- [ ] 가공 가능한 파생 피처(Derived Features) 목록화
-- [ ] 베이스라인 모델 구축 및 검증
+- [x] **OOP 리팩토링**: `UniversalPreprocessor` 및 `TimeSeriesTrainer` 도입
+- [x] **전문적인 시계열 처리**: 유가 보간(Interpolation) 및 휴일 데이터 자동 병합 클래스 구현
+- [x] **Target Engineering**: RMSLE 최적화를 위한 Log Transformation (`log1p` ↔ `expm1`) 자동화
+- [x] **Validation Strategy**: `DataSplitter`를 통한 시간 기반 Hold-out 검증 구축
+- [x] **Feature Engineering**: Lag(16, 30일), Rolling Mean(7일) 등 시계열 특징 추출
 
-## 🔍 Key Data Components
+## 🏗 System Architecture (KYUN-Pipe)
 
-분석 중인 주요 데이터 포인트는 다음과 같습니다:
+본 프로젝트는 다음과 같은 모듈화된 구조로 실행됩니다:
 
-1.  **Sales Data**: `store_nbr`, `family`, `onpromotion` 등의 정보를 포함한 핵심 판매 기록
-2.  **Stores**: 상점의 위치(City, State), 타입(Type), 클러스터 정보
-3.  **Oil Prices**: 에콰도르 경제에 밀접한 영향을 미치는 유가 데이터 (시계열 외생 변수)
-4.  **Holidays & Events**: 공휴일, 이벤트, 그리고 급여일(15일, 말일) 등의 일정 정보
-5.  **Transactions**: 각 상점의 일별 트랜잭션 수 (Sales와 밀접한 상관관계)
+1.  **DataLoader**: `train`, `test` 및 `context_data`(oil, stores 등)의 자동 로드 및 관리
+2.  **UniversalPreprocessor**: Scikit-learn Pipeline 기반의 전처리 엔진
+    - `HolidayChecker`: 공휴일 및 작업일 플래그 생성 및 병합
+    - `OilPriceImputer`: 시계열 연속성 확보를 위한 유가 데이터 보간
+    - `StoreStatsMerger`: 매장별 거래 통계 산출 및 병합
+    - `TimeSeriesWindowFeaturizer`: Lag 및 Rolling Window 피처 생성
+3.  **DataSplitter**: 시계열 누수(Data Leakage) 방지를 위한 날짜 기준 데이터 분할
+4.  **TimeSeriesTrainer**:
+    - 타겟 변수의 로그 스케일링 자동 관리
+    - `LGBMRegressor`, `XGBRegressor` 등 다양한 모델과의 호환성 확보
+    - Early Stopping 및 Validation 모니터링
 
-## 🛠 Roadmap
+## 🔍 Key Features Implemented
 
-1.  **Exploratory Data Analysis (Current)**: 데이터의 분포를 살피고 결측치 처리 전략 수립
-2.  **Feature Engineering**: 시계열 특징(Lag, Rolling mean), 공휴일 플래그, 유가 보간법 등 적용
-3.  **Modeling**: XGBoost, LightGBM 또는 Prophet/NeuralProphet을 활용한 예측
-4.  **Refactoring (OOP)**: `KYUN-Pipe` 구조에 맞춰 `DataLoader`, `Preprocessor`, `Trainer`로 모듈화
+- **Temporal Features**: Year, Month, Day of week, Weekend flag
+- **Window Features**: 16-day/30-day Lags, 7-day Rolling Mean of sales
+- **External Factors**: Linear interpolated Oil Prices, Transferred holiday handling
+- **Store Profiles**: Average/Std transactions per store
+
+## 🛠 How to Run
+
+```python
+# main.py 실행 시 전체 파이프라인이 순차적으로 동작합니다.
+python main.py
+```
 
 ## 🔗 Competition Info
 
 - [Kaggle: Store Sales - Time Series Forecasting](https://www.kaggle.com/competitions/store-sales-time-series-forecasting)
+
+### 💡 수정 포인트:
+
+- **Phase 변경**: `Phase 1 (EDA)`에서 `Phase 2 (Refactoring & Pipeline)`으로 격상시켰습니다.
+- **핵심 컴포넌트 강조**: 우리가 만든 `HolidayChecker`, `OilPriceImputer` 등의 클래스 이름을 명시하여 전문성을 높였습니다.
+- **TimeSeriesTrainer 특장점**: 로그 변환 자동화(`log1p` ↔ `expm1`) 부분을 강조하여 시계열 예측에 특화된 프로젝트임을 보여주었습니다.
+
+이 README를 통해 프로젝트의 완성도가 한눈에 들어올 거예요! (웃음)
