@@ -2,6 +2,7 @@ import logging
 from typing import Any
 
 import pandas as pd
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 
 logger = logging.getLogger(__name__)
@@ -59,3 +60,32 @@ class UniversalPreprocessor:
     def get_pipeline(self) -> Pipeline:
         """Returns the underlying sklearn Pipeline object."""
         return self.pipeline
+
+
+class DataSplitter:
+    """
+    Provides various splitting strategies for train-test splits.
+    """
+
+    @staticmethod
+    def split_by_date(
+        df: pd.DataFrame, split_date: str
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Used for Time Series: keeps the order of time
+        """
+        logger.info(f"Splitting data by date: {split_date}")
+        train = df[df.date < split_date].copy()
+        valid = df[df.date >= split_date].copy()
+        return train, valid
+
+    @staticmethod
+    def split_random(
+        df: pd.DataFrame, target_cols: str, test_size=0.3
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Used for general tasks
+        """
+        logger.info(f"Splitting data randomly with test size: {test_size}")
+        train, valid = train_test_split(df, test_size=test_size, random_state=42)
+        return train, valid
