@@ -149,30 +149,46 @@ class TimeSeriesWindowFeaturizer(BaseEstimator, TransformerMixin):
     def __init__(self, lags=[16, 30], window_size=7):
         self.lags = lags
         self.window_size = window_size
+        self.train_last_info = None
 
     def fit(self, X, y=None):
+        if "sales" in X.columns:
+            self.train_last_info = X.sort_values("date")
         return self
 
     def transform(self, df):
         X = df.copy()
 
-        if "sales" not in X.columns:
-            return X
+        is_test = "sales" not in X.columns
 
-        X = X.sort_values(["store_nbr", "family", "date"]).reset_index(drop=True)
+        if is_test and self.train_last_info is not None:
+            X["sales"] = 0
+            combined = pd.concat([self.train_last_info, X], axis=0).reset_index(
+                drop=True
+            )
+        else:
+            combined = X
+
+        combined = combined.sort_values(["store_nbr", "family", "date"]).reset_index(
+            drop=True
+        )
 
         for lag in self.lags:
-            X[f"sales_lag_{lag}"] = X.groupby(["store_nbr", "family"])[
+            combined[f"sales_lag_{lag}"] = combined.groupby(["store_nbr", "family"])[
                 "sales"
             ].transform(lambda x: x.shift(lag))
 
-        # Rolling Mean: Captures the average sales trend over the last 7 days (shifted by 16)
-        X[f"sales_roll_mean_{self.window_size}"] = X.groupby(["store_nbr", "family"])[
-            "sales"
-        ].transform(lambda x: x.shift(16).rolling(window=7).mean())
+        # Rolling Mean
+        combined[f"sales_roll_mean_{self.window_size}"] = combined.groupby(
+            ["store_nbr", "family"]
+        )["sales"].transform(
+            lambda x: x.shift(16).rolling(window=self.window_size).mean()
+        )
 
-        # Fill NaNs caused by shifting with 0
-        return X.fillna(0)
+        if is_test:
+            return combined.iloc[-len(X) :].drop(columns=["sales"]).fillna(0)
+
+        return combined.fillna(0)
 
 
 class DataTypeConverter(BaseEstimator, TransformerMixin):
@@ -242,6 +258,11 @@ if __name__ == "__main__":
         "month",
         "dayofweek",
         "is_weekend",
+        "sales_lag_16",
+        "sales_roll_mean_7",
+        "city",
+        "type",
+        "cluster",
     ]
 
     # 6. Initialize TimeSeriesTrainer
