@@ -1,7 +1,6 @@
 # 🏠 House Prices - Advanced Regression Techniques
 
-> **Predict sales prices and practice feature engineering, RFs, and gradient boosting.**
-> [Kaggle Competition Link](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques)
+> **Predict sales prices and practice feature engineering, RFs, and gradient boosting.** > [Kaggle Competition Link](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques)
 
 ---
 
@@ -9,10 +8,10 @@
 
 - **Objective**: 79개의 설명 변수를 활용하여 아이오와주 에임스(Ames) 지역의 주택 가격을 예측하는 회귀 문제.
 - **Data Status**: `train.csv`, `test.csv`로 구성되어 있으며, 수치형 및 범주형 데이터가 혼합된 80여 개의 컬럼(Id 제외 79개)을 포함.
-- **Main Challenge**: 
-    - 상당히 많은 수의 피처(Columns)에 대한 효율적인 처리 및 선택.
-    - 다양한 결측치 처리 및 이상치(Outlier) 제거.
-    - 왜도(Skewness)가 있는 타겟 변수 및 피처의 변환 (Log-transform 등).
+- **Main Challenge**:
+  - 상당히 많은 수의 피처(Columns)에 대한 효율적인 처리 및 선택.
+  - 다양한 결측치 처리 및 이상치(Outlier) 제거.
+  - 왜도(Skewness)가 있는 타겟 변수 및 피처의 변환 (Log-transform 등).
 
 ## ⚙️ 2. Pipeline Architecture (Planned)
 
@@ -49,9 +48,9 @@ uv sync
 
 실험 결과물은 `results/` 폴더 내에 자동 아카이빙될 예정입니다.
 
-| Artifact          | Description                                             | Format |
-| :---------------- | :------------------------------------------------------ | :----- |
-| `metadata.json`   | 사용된 피처 리스트, 모델 하이퍼파라미터 정보            | JSON   |
-| `metrics.json`    | RMSE, MAE, R2 Score 등 회귀 평가 지표                   | JSON   |
-| `predictions.csv` | Kaggle 제출을 위한 최종 테스트 세트 예측 결과           | CSV    |
-| `model.pkl`       | 학습된 모델 객체                                        | Joblib |
+| Artifact          | Description                                   | Format |
+| :---------------- | :-------------------------------------------- | :----- |
+| `metadata.json`   | 사용된 피처 리스트, 모델 하이퍼파라미터 정보  | JSON   |
+| `metrics.json`    | RMSE, MAE, R2 Score 등 회귀 평가 지표         | JSON   |
+| `predictions.csv` | Kaggle 제출을 위한 최종 테스트 세트 예측 결과 | CSV    |
+| `model.pkl`       | 학습된 모델 객체                              | Joblib |
