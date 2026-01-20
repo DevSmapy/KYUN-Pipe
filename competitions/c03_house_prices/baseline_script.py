@@ -7,7 +7,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 # split data by categorical, numeric
-
 train = pd.read_csv(
     "/kaggle/input/house-prices-advanced-regression-techniques/train.csv"
 )
@@ -49,10 +48,10 @@ train_X, valid_X, train_y, valid_y = train_test_split(
     X, y, test_size=0.3, random_state=42
 )
 
-
+# train model
 RF = RandomForestRegressor()
 RF.fit(train_X, train_y)
 
-
+# evaluate model
 preds = RF.predict(valid_X)
 np.sqrt(mean_squared_error(valid_y, preds))
