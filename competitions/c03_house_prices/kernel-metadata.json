@@ -1,9 +1,9 @@
 {
-  "id": "yongkyun/03_house_prices_regression2",
-  "title": "03_house_prices_regression2",
-  "code_file": "EDA_research.ipynb",
+  "id": "yongkyun/03_house_prices_regression",
+  "title": "03_house_prices_regression",
+  "code_file": "baseline_script.py",
   "language": "python",
-  "kernel_type": "notebook",
+  "kernel_type": "script",
   "is_private": "true",
   "enable_gpu": "false",
   "enable_tpu": "false",
