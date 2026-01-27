@@ -1,17 +1,35 @@
 # 🏠 House Prices - Advanced Regression Techniques
 
-> **Predict sales prices and practice feature engineering, RFs, and gradient boosting.** > [Kaggle Competition Link](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques)
+> Predict sales prices and practice feature engineering, RFs, and gradient boosting.
+> Kaggle: https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques
 
 ---
 
 ## 📌 1. Project Overview
 
 - **Objective**: 79개의 설명 변수를 활용하여 아이오와주 에임스(Ames) 지역의 주택 가격을 예측하는 회귀 문제.
-- **Data Status**: `train.csv`, `test.csv`로 구성되어 있으며, 수치형 및 범주형 데이터가 혼합된 80여 개의 컬럼(Id 제외 79개)을 포함.
-- **Main Challenge**:
-  - 상당히 많은 수의 피처(Columns)에 대한 효율적인 처리 및 선택.
-  - 다양한 결측치 처리 및 이상치(Outlier) 제거.
-  - 왜도(Skewness)가 있는 타겟 변수 및 피처의 변환 (Log-transform 등).
+- **Data**: `train.csv`(label 포함), `test.csv`(label 없음)
+- **Target**: `SalePrice`
+
+---
+
+## 🧪 Current Results (Local Validation)
+
+> 현재는 `train.csv`만 사용한 hold-out 검증 결과이며, 리더보드 제출 전 단계입니다.
+
+- **Metric (≈ Kaggle RMSLE)**: `0.13850` (RMSE on `log1p(SalePrice)` scale)
+- **Reference (RMSE, original scale)**: `27121.50`
+- **Validation**: `train_test_split(test_size=0.3, random_state=42)`
+- **Model**: `RandomForestRegressor`
+- **Preprocessing (high-level)**:
+  - Target transform: `log1p(SalePrice)`
+  - Missing (cat): `"None"` fill
+  - Encoding: 일부 서열형 컬럼은 ordinal mapping, 나머지 범주형은 One-Hot
+  - Missing (num): KNN imputation
+
+➡️ 상세 실험/변경 로그: [`results/Experiment_Report.md`](./results/Experiment_Report.md)
+
+---
 
 ## ⚙️ 2. Pipeline Architecture (Planned)
 
@@ -35,7 +53,7 @@
 uv sync
 
 # 메인 실험 실행 (예정)
-# python main.py
+# python baseline_script.py
 ```
 
 ## 💡 Key Focus Points
