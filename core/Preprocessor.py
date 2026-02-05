@@ -81,11 +81,13 @@ class DataSplitter:
 
     @staticmethod
     def split_random(
-        df: pd.DataFrame, target_cols: str, test_size=0.3
+        df: pd.DataFrame, test_size: float = 0.3, random_state: int = 42
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """
         Used for general tasks
         """
         logger.info(f"Splitting data randomly with test size: {test_size}")
-        train, valid = train_test_split(df, test_size=test_size, random_state=42)
+        train, valid = train_test_split(
+            df, test_size=test_size, random_state=random_state
+        )
         return train, valid
