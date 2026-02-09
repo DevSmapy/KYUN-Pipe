@@ -1,3 +1,4 @@
+import inspect
 import logging
 from typing import Any
 
@@ -47,15 +48,32 @@ class ModelTrainer:
             self.best_params = grid_search.best_params_
             self.is_tuned = True
         else:
-            # Hold-out 방식 (baseline_script 방식)
             logger.info(f"[{self.model_name}] Training with Hold-out validation...")
-            if X_valid is not None and y_valid is not None:
-                # LGBM의 early stopping 등을 활용하기 위해 eval_set 전달
-                self.model.fit(
-                    X_train, y_train, eval_set=[(X_valid, y_valid)], **fit_params
-                )
-            else:
-                self.model.fit(X_train, y_train, **fit_params)
+
+            fit_sig = inspect.signature(self.model.fit)
+            accepts_kwargs = any(
+                p.kind == inspect.Parameter.VAR_KEYWORD
+                for p in fit_sig.parameters.values()
+            )
+            allowed_keys = set(fit_sig.parameters.keys())
+
+            safe_fit_params: dict[str, Any] = {}
+            for k, v in fit_params.items():
+                if accepts_kwargs or k in allowed_keys:
+                    safe_fit_params[k] = v
+
+            # eval_set은:
+            # - 사용자가 fit_params로 넣었으면 그대로 사용
+            # - 아니면 X_valid/y_valid가 있을 때, 모델이 받는 경우에만 자동 주입
+            if (
+                X_valid is not None
+                and y_valid is not None
+                and "eval_set" not in safe_fit_params
+                and (accepts_kwargs or "eval_set" in allowed_keys)
+            ):
+                safe_fit_params["eval_set"] = [(X_valid, y_valid)]
+
+            self.model.fit(X_train, y_train, **safe_fit_params)
 
         logger.info(f"[{self.model_name}] Training completed.")
 
