@@ -180,7 +180,10 @@ class ValueEncoder(BaseEstimator, TransformerMixin):
         if len(self.cat_columns_) == 0:
             return self
 
-        self.encoder.fit(X_out[self.cat_columns_])
+        # ✅ mixed type(str/float) 방지: categorical 입력을 항상 string으로 통일
+        X_cat = X_out.loc[:, self.cat_columns_].fillna("None").astype("string")
+
+        self.encoder.fit(X_cat)
 
         if hasattr(self.encoder, "get_feature_names_out"):
             self.feature_names_ = self.encoder.get_feature_names_out(self.cat_columns_)
@@ -195,14 +198,15 @@ class ValueEncoder(BaseEstimator, TransformerMixin):
         if self.cat_columns_ is None or len(self.cat_columns_) == 0:
             return X_out
 
-        encoded = self.encoder.transform(X_out[self.cat_columns_])
+        # ✅ fit과 동일한 전처리 적용
+        X_cat = X_out.loc[:, self.cat_columns_].fillna("None").astype("string")
+        encoded = self.encoder.transform(X_cat)
 
         if self.feature_names_ is not None:
             encoded_df = pd.DataFrame(
                 encoded, columns=self.feature_names_, index=X_out.index
             )
         else:
-            # fallback
             encoded_df = pd.DataFrame(
                 encoded, columns=self.cat_columns_, index=X_out.index
             )
