@@ -1,5 +1,6 @@
 import logging
 import sys
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -170,7 +171,7 @@ if __name__ == "__main__":
     for name, model in models:
         trainer = ModelTrainer(model=model, model_name=name)
 
-        fit_params: dict[str, object] = {}
+        fit_params: dict[str, Any] = {}
         if name == "LightGBM":
             fit_params = {
                 "eval_metric": "rmse",
