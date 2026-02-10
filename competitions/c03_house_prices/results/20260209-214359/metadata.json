@@ -1,0 +1,20 @@
+{
+  "competition": "c03_house_prices",
+  "target": "SalePrice",
+  "target_transform": "log1p",
+  "validation": {
+    "type": "holdout",
+    "test_size": 0.3,
+    "random_state": 42
+  },
+  "preprocessing_steps": [
+    "value_converter",
+    "ordinal_encoder",
+    "onehot_encoder",
+    "numeric_caster"
+  ],
+  "train_shape": [1022, 233],
+  "valid_shape": [438, 233],
+  "best_model": "XGBoost",
+  "best_rmse_log": 0.12854375607520663
+}
